@@ -1,0 +1,100 @@
+#!/bin/bash
+
+####################################################################################################
+#
+# Setup Your Mac Configuration Download Estimation Tester
+#
+####################################################################################################
+#
+# HISTORY
+#
+#   Version 0.0.1, Release Date TBD, Andrew Spokes (@iDrewbs/@TechTrekkie)
+#   - Utilizing the code from the Setup-Your-Mac script, this will allow you to quickly view and tweak the download estimates without having to re-run the SYM script
+# 
+####################################################################################################
+
+osVersion=$( sw_vers -productVersion )
+osBuild=$( sw_vers -buildVersion )
+osMajorVersion=$( echo "${osVersion}" | awk -F '.' '{print $1}' )
+modelName=$( /usr/libexec/PlistBuddy -c 'Print :0:_items:0:machine_name' /dev/stdin <<< "$(system_profiler -xml SPHardwareDataType)" )
+reconOptions=""
+exitCode="0"
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Configuration Download Estimation
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+configurationDownloadEstimation="true"  # [ true (default) | false ]
+correctionCoefficient="1.00"            # "Fudge factor" (to help estimate match reality)
+configurationCatchAllSize="121"          # Catch-all Configuration in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
+configurationOneSize="60"               # Configuration One in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
+configurationTwoSize="110"               # Configuration Two in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
+configurationThreeSize="121"            # Configuration Three in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
+
+
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Check Network Quality for Configurations (thanks, @bartreadon!)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+function get_json_value() {
+	JSON="$1" osascript -l 'JavaScript' \
+	-e 'const env = $.NSProcessInfo.processInfo.environment.objectForKey("JSON").js' \
+	-e "JSON.parse(env).$2"
+}
+
+
+function checkNetworkQualityConfigurations() {
+	
+
+	
+	networkQuality -s -v -c > /var/tmp/networkQualityTest
+
+	
+	networkQualityTest=$( < /var/tmp/networkQualityTest )
+	rm /var/tmp/networkQualityTest
+	
+	case "${osVersion}" in
+		
+		11* ) 
+			dlThroughput="N/A; macOS ${osVersion}"
+			dlResponsiveness="N/A; macOS ${osVersion}"
+			dlStartDate="N/A; macOS ${osVersion}"
+			dlEndDate="N/A; macOS ${osVersion}"
+		;;
+		
+		12* | 13* )
+			dlThroughput=$( get_json_value "$networkQualityTest" "dl_throughput")
+			dlResponsiveness=$( get_json_value "$networkQualityTest" "dl_responsiveness" )
+			dlStartDate=$( get_json_value "$networkQualityTest" "start_date" )
+			dlEndDate=$( get_json_value "$networkQualityTest" "end_date" )
+		;;
+		
+	esac
+	
+	mbps=$( echo "scale=2; ( $dlThroughput / 1000000 )" | bc )
+	echo "Network Quality Test: Started: $dlStartDate, Ended: $dlEndDate; Download: $mbps Mbps, Responsiveness: $dlResponsiveness"
+	echo ""
+	echo "Download Speed: $mbps (Mbps)"
+	echo ""
+	configurationOneEstimatedSeconds=$( echo "scale=2; (((( $configurationOneSize / $mbps ) * 60 ) * 60 ) * $correctionCoefficient )" | bc | sed 's/\.[0-9]*//' )
+	echo "Configuration One Estimated Seconds: $configurationOneEstimatedSeconds"
+	echo "Configuration One Estimate: $(printf '%dh:%dm:%ds\n' $((configurationOneEstimatedSeconds/3600)) $((configurationOneEstimatedSeconds%3600/60)) $((configurationOneEstimatedSeconds%60)))"
+	echo ""
+	configurationTwoEstimatedSeconds=$( echo "scale=2; (((( $configurationTwoSize / $mbps ) * 60 ) * 60 ) * $correctionCoefficient )" | bc | sed 's/\.[0-9]*//' )
+	echo "Configuration Two Estimated Seconds: $configurationTwoEstimatedSeconds"
+	echo "Configuration Two Estimate: $(printf '%dh:%dm:%ds\n' $((configurationTwoEstimatedSeconds/3600)) $((configurationTwoEstimatedSeconds%3600/60)) $((configurationTwoEstimatedSeconds%60)))"
+	echo ""
+	configurationThreeEstimatedSeconds=$( echo "scale=2; (((( $configurationThreeSize / $mbps ) * 60 ) * 60 ) * $correctionCoefficient )" | bc | sed 's/\.[0-9]*//' )
+	echo "Configuration Three Estimated Seconds: $configurationThreeEstimatedSeconds"
+	echo "Configuration Three Estimate: $(printf '%dh:%dm:%ds\n' $((configurationThreeEstimatedSeconds/3600)) $((configurationThreeEstimatedSeconds%3600/60)) $((configurationThreeEstimatedSeconds%60)))"
+	
+	
+	
+}
+
+checkNetworkQualityConfigurations
