@@ -14,19 +14,15 @@
 ####################################################################################################
 
 osVersion=$( sw_vers -productVersion )
-osBuild=$( sw_vers -buildVersion )
-osMajorVersion=$( echo "${osVersion}" | awk -F '.' '{print $1}' )
-modelName=$( /usr/libexec/PlistBuddy -c 'Print :0:_items:0:machine_name' /dev/stdin <<< "$(system_profiler -xml SPHardwareDataType)" )
-reconOptions=""
-exitCode="0"
-
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Configuration Download Estimation
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-configurationDownloadEstimation="true"  # [ true (default) | false ]
+### Modify these settings to adjust the Download Estimation output. 
+### Instructions for getting configuration sizes can be found in @dan-snelson blog: [INSERT LINK HERE]
+
 correctionCoefficient="1.00"            # "Fudge factor" (to help estimate match reality)
 configurationCatchAllSize="121"          # Catch-all Configuration in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
 configurationOneSize="60"               # Configuration One in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
