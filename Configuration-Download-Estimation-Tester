@@ -23,12 +23,13 @@ osVersion=$( sw_vers -productVersion )
 ### Modify these settings to adjust the Download Estimation output. 
 ### Instructions for getting configuration sizes can be found in @dan-snelson blog: [INSERT LINK HERE]
 
+### Once you have the desired/accurate estimation output, you can copy these values to your Setup-Your-Mac script
+
 correctionCoefficient="1.00"            # "Fudge factor" (to help estimate match reality)
 configurationCatchAllSize="121"          # Catch-all Configuration in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
 configurationOneSize="60"               # Configuration One in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
 configurationTwoSize="110"               # Configuration Two in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
 configurationThreeSize="121"            # Configuration Three in Gibibits (i.e., Total File Size in Gigabytes * 7.451) 
-
 
 
 
@@ -47,10 +48,7 @@ function get_json_value() {
 function checkNetworkQualityConfigurations() {
 	
 
-	
 	networkQuality -s -v -c > /var/tmp/networkQualityTest
-
-	
 	networkQualityTest=$( < /var/tmp/networkQualityTest )
 	rm /var/tmp/networkQualityTest
 	
@@ -89,8 +87,8 @@ function checkNetworkQualityConfigurations() {
 	echo "Configuration Three Estimated Seconds: $configurationThreeEstimatedSeconds"
 	echo "Configuration Three Estimate: $(printf '%dh:%dm:%ds\n' $((configurationThreeEstimatedSeconds/3600)) $((configurationThreeEstimatedSeconds%3600/60)) $((configurationThreeEstimatedSeconds%60)))"
 	
-	
-	
+
 }
 
+# Execute the function
 checkNetworkQualityConfigurations
